@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FuelTrack — Personal Fuel Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+  :root {
+    --fm-primary:        #1A5FD4;
+    --fm-primary-light:  #E8F0FD;
+    --fm-primary-dark:   #0D3D8C;
+    --fm-success:        #1E7C34;
+    --fm-success-light:  #E4F5E8;
+    --fm-warning:        #A0520A;
+    --fm-warning-light:  #FEF0DC;
+    --fm-danger:         #C02B2B;
+    --fm-danger-light:   #FDEAEA;
+    --fm-gray:           #6B6A65;
+    --fm-gray-light:     #F3F1EA;
+    --fm-border:         #E2DED6;
+    --fm-card-bg:        #FFFFFF;
+    --fm-page-bg:        #F5F3EE;
+    --fm-text:           #1E1D1A;
+    --fm-text-muted:     #8A8880;
+    --fm-sidebar-w:      248px;
+    --fm-teal:           #0A7060;
+    --fm-font:           'DM Sans', system-ui, sans-serif;
+    --fm-mono:           'JetBrains Mono', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    background: var(--fm-page-bg);
+    color: var(--fm-text);
+    font-family: var(--fm-font);
+    font-size: 15px;
+    margin: 0;
+  }
+
+  /* ── Sidebar ─────────────────────────────────── */
+  .sidebar {
+    width: var(--fm-sidebar-w);
+    background: #111827;
+    background-image: linear-gradient(160deg, #111827 0%, #0d1f3c 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    z-index: 100;
+    border-right: 1px solid rgba(255,255,255,0.06);
+  }
+  .sidebar-brand {
+    padding: 22px 20px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar-brand .logo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 2px;
+  }
+  .sidebar-brand .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #3DCCAB, #1A8CFF);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .sidebar-brand h4 {
+    font-size: 15px; font-weight: 700; margin: 0;
+    color: #fff; letter-spacing: -0.01em;
+  }
+  .sidebar-brand .ver {
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    font-family: var(--fm-mono);
+    padding-left: 41px;
+  }
+  .sidebar-nav { flex: 1; padding: 14px 0; overflow-y: auto; }
+  .nav-group-label {
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.09em; color: rgba(255,255,255,0.28);
+    text-transform: uppercase;
+    padding: 10px 18px 4px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 18px;
+    color: rgba(255,255,255,0.58);
+    font-size: 13.5px; font-weight: 500;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    border-radius: 0;
+    transition: all .12s;
+    user-select: none;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .nav-item.active {
+    background: rgba(26,95,212,0.22);
+    color: #fff;
+    border-left-color: #3DCCAB;
+  }
+  .nav-item i { width: 18px; text-align: center; font-size: 15px; flex-shrink: 0; }
+  .sidebar-footer {
+    padding: 14px 18px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    font-size: 10.5px;
+    color: rgba(255,255,255,0.22);
+    line-height: 1.5;
+  }
+  .nc-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+  }
+
+  /* ── Main layout ─────────────────────────────── */
+  .main-content {
+    margin-left: var(--fm-sidebar-w);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  .topbar {
+    background: var(--fm-card-bg);
+    border-bottom: 1px solid var(--fm-border);
+    padding: 12px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 10px; }
+  .topbar-title { font-size: 16px; font-weight: 700; color: var(--fm-text); letter-spacing: -0.01em; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .page-content { padding: 24px 28px; flex: 1; }
+
+  /* ── Cards ───────────────────────────────────── */
+  .fm-card {
+    background: var(--fm-card-bg);
+    border: 1px solid var(--fm-border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .fm-card-title {
+    font-size: 13.5px; font-weight: 600;
+    color: var(--fm-text);
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 7px;
+  }
+
+  /* ── Stat cards ──────────────────────────────── */
+  .stat-card {
+    background: var(--fm-card-bg);
+    border: 1px solid var(--fm-border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .stat-blue::before  { background: linear-gradient(90deg, #1A5FD4, #5EA5FF); }
+  .stat-amber::before { background: linear-gradient(90deg, #A0520A, #F5A623); }
+  .stat-green::before { background: linear-gradient(90deg, #1E7C34, #4CAF50); }
+  .stat-teal::before  { background: linear-gradient(90deg, #0A7060, #3DCCAB); }
+
+  .stat-label { font-size: 11.5px; color: var(--fm-text-muted); font-weight: 500; margin-bottom: 7px; }
+  .stat-value { font-size: 26px; font-weight: 700; line-height: 1; margin-bottom: 5px; letter-spacing: -0.02em; font-family: var(--fm-mono); }
+  .stat-sub   { font-size: 11px; color: var(--fm-text-muted); }
+  .stat-blue .stat-value  { color: var(--fm-primary); }
+  .stat-green .stat-value { color: var(--fm-success); }
+  .stat-amber .stat-value { color: var(--fm-warning); }
+  .stat-teal .stat-value  { color: var(--fm-teal); }
+
+  /* ── Buttons ─────────────────────────────────── */
+  .btn-primary {
+    background: var(--fm-primary);
+    color: #fff; border: none;
+    border-radius: 8px; padding: 9px 18px;
+    font-size: 13.5px; font-weight: 600;
+    cursor: pointer; transition: background .12s;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--fm-font);
+  }
+  .btn-primary:hover { background: var(--fm-primary-dark); }
+  .btn-secondary {
+    background: var(--fm-card-bg);
+    color: var(--fm-text); border: 1px solid var(--fm-border);
+    border-radius: 8px; padding: 9px 18px;
+    font-size: 13.5px; font-weight: 500;
+    cursor: pointer; transition: all .12s;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--fm-font);
+  }
+  .btn-secondary:hover { background: var(--fm-page-bg); }
+  .btn-icon {
+    background: none; border: none; cursor: pointer;
+    padding: 5px 7px; border-radius: 6px;
+    font-size: 13px; color: var(--fm-text-muted);
+    transition: all .12s; line-height: 1;
+  }
+  .btn-icon:hover { background: var(--fm-danger-light); color: var(--fm-danger); }
+  .btn-icon.edit:hover { background: var(--fm-primary-light); color: var(--fm-primary); }
+  .btn-success {
+    background: var(--fm-success);
+    color: #fff; border: none;
+    border-radius: 8px; padding: 9px 18px;
+    font-size: 13.5px; font-weight: 600;
+    cursor: pointer; transition: background .12s;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--fm-font);
+  }
+  .btn-success:hover { background: #165c27; }
+  .btn-danger {
+    background: var(--fm-danger-light);
+    color: var(--fm-danger); border: 1px solid #f0b4b4;
+    border-radius: 8px; padding: 9px 18px;
+    font-size: 13.5px; font-weight: 600;
+    cursor: pointer; transition: all .12s;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--fm-font);
+  }
+  .btn-danger:hover { background: #fad6d6; }
+
+  /* ── Forms ───────────────────────────────────── */
+  .form-label {
+    font-size: 12.5px; font-weight: 600;
+    color: var(--fm-text); margin-bottom: 5px; display: block;
+  }
+  .form-control, .form-select {
+    font-size: 13.5px;
+    border: 1.5px solid var(--fm-border);
+    border-radius: 8px; padding: 8px 12px;
+    background: var(--fm-card-bg); color: var(--fm-text);
+    width: 100%; font-family: var(--fm-font);
+    transition: border-color .12s;
+  }
+  .form-control:focus, .form-select:focus {
+    border-color: var(--fm-primary);
+    box-shadow: 0 0 0 3px rgba(26,95,212,0.1);
+    outline: none;
+  }
+  .form-control::placeholder { color: var(--fm-text-muted); }
+
+  /* ── Vehicle chips ───────────────────────────── */
+  .vehicle-selector { display: flex; gap: 8px; flex-wrap: wrap; }
+  .v-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 20px;
+    border: 1.5px solid var(--fm-border);
+    background: var(--fm-card-bg); cursor: pointer;
+    font-size: 13px; color: var(--fm-text);
+    transition: all .12s; white-space: nowrap;
+    user-select: none; font-family: var(--fm-font); font-weight: 500;
+  }
+  .v-chip:hover { border-color: var(--fm-primary); }
+  .v-chip.active {
+    border-color: var(--fm-primary);
+    background: var(--fm-primary-light);
+    color: var(--fm-primary); font-weight: 600;
+  }
+
+  /* ── Table ───────────────────────────────────── */
+  .fm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .fm-table th {
+    font-size: 10.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--fm-text-muted);
+    border-bottom: 1.5px solid var(--fm-border);
+    padding: 8px 10px; text-align: left;
+  }
+  .fm-table td {
+    padding: 10px; border-bottom: 1px solid var(--fm-border);
+    vertical-align: middle;
+  }
+  .fm-table tr:last-child td { border-bottom: none; }
+  .fm-table tr:hover td { background: var(--fm-page-bg); }
+
+  /* ── Badges ──────────────────────────────────── */
+  .fuel-badge {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px;
+  }
+  .badge-buy {
+    background: var(--fm-primary-light); color: var(--fm-primary);
+    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px;
+  }
+  .badge-use {
+    background: var(--fm-warning-light); color: var(--fm-warning);
+    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px;
+  }
+  .badge-odo {
+    background: var(--fm-success-light); color: var(--fm-success);
+    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px;
+  }
+  .version-tag {
+    font-size: 10.5px;
+    background: var(--fm-gray-light); color: var(--fm-gray);
+    padding: 3px 9px; border-radius: 10px; font-weight: 600;
+    font-family: var(--fm-mono);
+  }
+
+  /* ── Month nav ───────────────────────────────── */
+  .month-nav { display: flex; align-items: center; gap: 6px; }
+  .month-nav button {
+    background: var(--fm-card-bg); border: 1px solid var(--fm-border);
+    border-radius: 7px; width: 30px; height: 30px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: var(--fm-text); padding: 0;
+  }
+  .month-nav button:hover { background: var(--fm-page-bg); }
+  .month-label { font-size: 13.5px; font-weight: 600; min-width: 136px; text-align: center; }
+
+  /* ── Modal ───────────────────────────────────── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9000; align-items: center; justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--fm-card-bg);
+    border-radius: 14px; padding: 24px 26px;
+    width: 520px; max-width: 95vw;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  }
+  .modal-header {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 20px;
+  }
+  .modal-header h5 { font-size: 16px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+  .modal-close {
+    background: none; border: none; font-size: 20px; cursor: pointer;
+    color: var(--fm-text-muted); padding: 2px 6px;
+    border-radius: 6px; line-height: 1;
+  }
+  .modal-close:hover { background: var(--fm-page-bg); }
+
+  /* ── Log type toggle ─────────────────────────── */
+  .log-type-toggle { display: flex; gap: 8px; }
+  .type-btn {
+    flex: 1; padding: 9px; border-radius: 8px;
+    border: 1.5px solid var(--fm-border);
+    background: var(--fm-card-bg); cursor: pointer;
+    font-size: 13px; font-weight: 600;
+    color: var(--fm-text-muted);
+    transition: all .12s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    font-family: var(--fm-font);
+  }
+  .type-btn:hover { border-color: #b4b2a9; color: var(--fm-text); }
+  .type-btn.active-buy {
+    border-color: var(--fm-primary);
+    background: var(--fm-primary-light);
+    color: var(--fm-primary);
+  }
+  .type-btn.active-use {
+    border-color: var(--fm-warning);
+    background: var(--fm-warning-light);
+    color: var(--fm-warning);
+  }
+
+  /* ── Total box ───────────────────────────────── */
+  .total-box {
+    background: var(--fm-primary-light);
+    border: 1px solid #b8d4f8;
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 13px; color: var(--fm-primary); font-weight: 600;
+  }
+
+  /* ── Icon & Color picker ─────────────────────── */
+  .icon-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+  .icon-btn {
+    font-size: 22px; padding: 5px 8px; border-radius: 8px;
+    border: 2px solid transparent; cursor: pointer;
+    background: var(--fm-page-bg); transition: border-color .12s;
+    user-select: none; display: inline-block;
+  }
+  .icon-btn:hover { border-color: #b4b2a9; }
+  .icon-btn.selected { border-color: var(--fm-primary); background: var(--fm-primary-light); }
+
+  .color-picker { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .color-swatch {
+    width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+    border: 3px solid transparent; outline: 2px solid transparent;
+    outline-offset: 2px; transition: outline .12s;
+    flex-shrink: 0; display: inline-block;
+  }
+  .color-swatch:hover { outline: 2px solid #b4b2a9; }
+  .color-swatch.selected { outline: 3px solid var(--fm-primary); }
+
+  /* ── Info banners ────────────────────────────── */
+  .info-banner {
+    border-radius: 10px; padding: 12px 16px;
+    margin-bottom: 16px;
+    display: flex; align-items: flex-start; gap: 12px;
+    font-size: 13px;
+  }
+  .info-banner.warning { background: var(--fm-warning-light); border: 1px solid #F5C985; color: #6B3406; }
+  .info-banner.info    { background: var(--fm-primary-light); border: 1px solid #B5D4F4; color: var(--fm-primary-dark); }
+  .info-banner.success { background: var(--fm-success-light); border: 1px solid #9ADE9A; color: #145426; }
+  .info-banner.danger  { background: var(--fm-danger-light);  border: 1px solid #F5ACAC; color: var(--fm-danger); }
+  .info-banner i { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+  .info-banner p { margin: 0; line-height: 1.5; }
+
+  /* ── Fuel progress bars ──────────────────────── */
+  .fuel-progress {
+    height: 7px; background: var(--fm-page-bg);
+    border-radius: 4px; overflow: hidden; margin-top: 6px;
+  }
+  .fuel-progress-bar { height: 100%; border-radius: 4px; transition: width .4s; }
+
+  /* ── Empty state ─────────────────────────────── */
+  .empty-state {
+    text-align: center; padding: 40px 20px; color: var(--fm-text-muted);
+  }
+  .empty-state i { font-size: 36px; display: block; margin-bottom: 10px; opacity: .4; }
+  .empty-state p { font-size: 14px; margin: 0; }
+
+  /* ── Pages ───────────────────────────────────── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── Toast ───────────────────────────────────── */
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 99999;
+    background: #111827; color: #fff;
+    padding: 11px 18px; border-radius: 10px;
+    font-size: 13px; font-weight: 500;
+    display: flex; align-items: center; gap: 10px;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+    min-width: 200px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+  #toast.show { opacity: 1; pointer-events: auto; }
+
+  /* ── Divider ─────────────────────────────────── */
+  .divider { border: none; border-top: 1px solid var(--fm-border); margin: 16px 0; }
+
+  /* ── Settings sections ───────────────────────── */
+  .settings-section { margin-bottom: 28px; }
+  .settings-section-title {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--fm-text-muted);
+    margin-bottom: 14px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--fm-border);
+  }
+  .settings-row {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--fm-border);
+  }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-row-info p { font-size: 13.5px; font-weight: 600; margin: 0 0 2px; }
+  .settings-row-info span { font-size: 12px; color: var(--fm-text-muted); }
+
+  /* ── Summary mini-bar ────────────────────────── */
+  .mini-stat {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--fm-page-bg); border-radius: 6px;
+    padding: 4px 10px; font-size: 12px; font-weight: 600;
+    color: var(--fm-text-muted);
+  }
+  .mini-stat strong { color: var(--fm-text); }
+
+  /* ── Responsive ──────────────────────────────── */
+  @media (max-width: 768px) {
+    :root { --fm-sidebar-w: 60px; }
+    .sidebar-brand h4, .sidebar-brand .ver,
+    .nav-item span, .nav-group-label, .sidebar-footer { display: none; }
+    .nav-item { justify-content: center; padding: 12px 0; }
+    .page-content { padding: 16px 14px; }
+    .topbar { padding: 12px 16px; }
+    .sidebar-brand .logo { justify-content: center; }
+    .sidebar-brand .logo span { display: none; }
+  }
+</style>
+</head>
+<body>
+<div style="display:flex;min-height:100vh">
+
+  <!-- ── SIDEBAR ─────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">
+        <div class="logo-icon">⛽</div>
+        <span><h4>FuelTrack</h4></span>
+      </div>
+      <span class="ver" id="sidebarVer">v2.0.0</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group-label">Main</div>
+      <div class="nav-item" data-page="dashboard" onclick="navigate('dashboard')"><i class="bi bi-speedometer2"></i><span>Dashboard</span></div>
+      <div class="nav-item" data-page="logs"      onclick="navigate('logs')"><i class="bi bi-journal-text"></i><span>Fuel Logs</span></div>
+      <div class="nav-group-label">Setup</div>
+      <div class="nav-item" data-page="vehicles"  onclick="navigate('vehicles')"><i class="bi bi-car-front-fill"></i><span>Vehicles</span></div>
+      <div class="nav-item" data-page="fuels"     onclick="navigate('fuels')"><i class="bi bi-droplet-half"></i><span>Fuel Types</span></div>
+      <div class="nav-item" data-page="prices"    onclick="navigate('prices')"><i class="bi bi-tag-fill"></i><span>Fuel Prices</span></div>
+      <div class="nav-group-label">More</div>
+      <div class="nav-item" data-page="settings"  onclick="navigate('settings')"><i class="bi bi-gear-fill"></i><span>Settings & Data</span></div>
+    </nav>
+    <div class="sidebar-footer">
+      FuelTrack &copy; 2025<br>
+      <span class="nc-badge">Non-Commercial</span>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ─────────────────────────────────────── -->
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="topbarTitle">Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <span class="version-tag" id="topbarVer">v2.0.0</span>
+        <button class="btn-primary" onclick="topbarAction()">
+          <i class="bi bi-plus-lg"></i><span id="topbarActionLabel">Add Log</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="page-content">
+
+      <!-- ── DASHBOARD ─────────────────────────────── -->
+      <div class="page" id="page-dashboard">
+
+        <div class="fm-card" style="padding:16px 20px;margin-bottom:16px">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div class="fm-card-title mb-0"><i class="bi bi-car-front" style="color:var(--fm-primary)"></i>Select Vehicle</div>
+            <div class="month-nav">
+              <button onclick="changeMonth(-1)"><i class="bi bi-chevron-left"></i></button>
+              <span class="month-label" id="monthLabel">—</span>
+              <button onclick="changeMonth(1)"><i class="bi bi-chevron-right"></i></button>
+            </div>
+          </div>
+          <div class="vehicle-selector" id="vehicleChips"></div>
+        </div>
+
+        <div id="mileageBanner" class="info-banner warning" style="display:none">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <p><strong>Odometer data needed.</strong> Add logs with odometer start &amp; end readings to enable automatic average mileage calculation.</p>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-6 col-md-3"><div class="stat-card stat-blue">
+            <div class="stat-label"><i class="bi bi-fuel-pump me-1"></i>Fuel Bought</div>
+            <div class="stat-value" id="stat-bought">0 L</div>
+            <div class="stat-sub" id="stat-bought-cost">৳0.00 spent</div>
+          </div></div>
+          <div class="col-6 col-md-3"><div class="stat-card stat-amber">
+            <div class="stat-label"><i class="bi bi-arrow-down-circle me-1"></i>Fuel Used</div>
+            <div class="stat-value" id="stat-used">0 L</div>
+            <div class="stat-sub" id="stat-used-pct">— of bought</div>
+          </div></div>
+          <div class="col-6 col-md-3"><div class="stat-card stat-green">
+            <div class="stat-label"><i class="bi bi-speedometer me-1"></i>Avg Mileage</div>
+            <div class="stat-value" id="stat-mileage">—</div>
+            <div class="stat-sub" id="stat-mileage-sub">km/L</div>
+          </div></div>
+          <div class="col-6 col-md-3"><div class="stat-card stat-teal">
+            <div class="stat-label"><i class="bi bi-signpost me-1"></i>Total Distance</div>
+            <div class="stat-value" id="stat-dist">0 km</div>
+            <div class="stat-sub" id="stat-dist-sub">This month</div>
+          </div></div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-lg-7">
+            <div class="fm-card">
+              <div class="fm-card-title"><i class="bi bi-bar-chart-fill" style="color:var(--fm-primary)"></i>6-Month Trend</div>
+              <canvas id="trendChart" height="175"></canvas>
+            </div>
+          </div>
+          <div class="col-lg-5">
+            <div class="fm-card" style="height:100%">
+              <div class="fm-card-title"><i class="bi bi-clock-history" style="color:var(--fm-warning)"></i>Recent Logs</div>
+              <div id="recentLogs"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="fm-card">
+          <div class="fm-card-title"><i class="bi bi-pie-chart-fill" style="color:var(--fm-teal)"></i>Fuel Type Breakdown — This Month</div>
+          <div id="fuelBreakdown"></div>
+        </div>
+      </div>
+
+      <!-- ── FUEL LOGS ─────────────────────────────── -->
+      <div class="page" id="page-logs">
+        <div class="fm-card">
+          <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+            <div class="fm-card-title mb-0"><i class="bi bi-journal-text" style="color:var(--fm-primary)"></i>All Fuel Logs</div>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+              <select class="form-select" style="width:180px" id="filterVehicle" onchange="renderLogs()"><option value="">All Vehicles</option></select>
+              <select class="form-select" style="width:140px" id="filterLogType" onchange="renderLogs()">
+                <option value="">All Types</option>
+                <option value="buy">Buy</option>
+                <option value="use">Use</option>
+              </select>
+              <button class="btn-secondary" onclick="exportLogsCSV()" title="Export logs as CSV">
+                <i class="bi bi-download"></i> CSV
+              </button>
+            </div>
+          </div>
+          <div id="logsTable"></div>
+        </div>
+      </div>
+
+      <!-- ── VEHICLES ───────────────────────────────── -->
+      <div class="page" id="page-vehicles">
+        <div class="row g-3">
+          <div class="col-md-5">
+            <div class="fm-card">
+              <div class="fm-card-title"><i class="bi bi-plus-circle-fill" style="color:var(--fm-primary)"></i><span id="vehicleFormTitle">Add Vehicle</span></div>
+              <div class="mb-3">
+                <label class="form-label">Vehicle Name / Nickname <span style="color:var(--fm-danger)">*</span></label>
+                <input type="text" class="form-control" id="vName" placeholder="e.g. My Honda Civic">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Vehicle Type <span style="color:var(--fm-danger)">*</span></label>
+                <input type="text" class="form-control" id="vType" placeholder="e.g. Sedan, SUV, Motorcycle…">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Registration / Plate</label>
+                <input type="text" class="form-control" id="vPlate" placeholder="e.g. DHA-1234">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Default Fuel Type</label>
+                <select class="form-select" id="vFuelType"><option value="">Select fuel type</option></select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Icon</label>
+                <div class="icon-picker" id="iconPicker">
+                  <span class="icon-btn selected" data-icon="🚗">🚗</span>
+                  <span class="icon-btn" data-icon="🚙">🚙</span>
+                  <span class="icon-btn" data-icon="🏍️">🏍️</span>
+                  <span class="icon-btn" data-icon="🚌">🚌</span>
+                  <span class="icon-btn" data-icon="🚚">🚚</span>
+                  <span class="icon-btn" data-icon="🚐">🚐</span>
+                  <span class="icon-btn" data-icon="🚜">🚜</span>
+                  <span class="icon-btn" data-icon="⛵">⛵</span>
+                  <span class="icon-btn" data-icon="✈️">✈️</span>
+                  <span class="icon-btn" data-icon="🚁">🚁</span>
+                </div>
+              </div>
+              <input type="hidden" id="vEditId">
+              <div class="d-flex gap-2">
+                <button class="btn-primary flex-fill" onclick="saveVehicle()"><i class="bi bi-floppy"></i> <span id="vSaveBtnLabel">Save Vehicle</span></button>
+                <button class="btn-secondary" id="vCancelBtn" onclick="resetVehicleForm()" style="display:none">Cancel</button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-7">
+            <div class="fm-card">
+              <div class="fm-card-title"><i class="bi bi-car-front-fill" style="color:var(--fm-primary)"></i>Saved Vehicles</div>
+              <div id="vehiclesList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── FUEL TYPES ─────────────────────────────── -->
+      <div class="page" id="page-fuels">
+        <div class="row g-3">
+          <div class="col-md-5">
+            <div class="fm-card">
+              <div class="fm-card-title"><i class="bi bi-droplet-fill" style="color:var(--fm-primary)"></i>Add Custom Fuel Type</div>
+              <div class="mb-3">
+                <label class="form-label">Fuel Name <span style="color:var(--fm-danger)">*</span></label>
+                <input type="text" class="form-control" id="ftName" placeholder="e.g. Octane 97">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Unit</label>
+                <select class="form-select" id="ftUnit">
+                  <option value="L">Litre (L)</option>
+                  <option value="gal">Gallon (gal)</option>
+                  <option value="kg">Kilogram (kg)</option>
+                  <option value="kWh">kWh (Electric)</option>
+                  <option value="m³">Cubic Metre (m³)</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Color Tag</label>
+                <div class="color-picker" id="colorPicker">
+                  <div class="color-swatch selected" data-color="#1A5FD4" style="background:#1A5FD4"></div>
+                  <div class="color-swatch" data-color="#1E7C34" style="background:#1E7C34"></div>
+                  <div class="color-swatch" data-color="#A0520A" style="background:#A0520A"></div>
+                  <div class="color-swatch" data-color="#C02B2B" style="background:#C02B2B"></div>
+                  <div class="color-swatch" data-color="#0A7060" style="background:#0A7060"></div>
+                  <div class="color-swatch" data-color="#6632B8" style="background:#6632B8"></div>
+                  <div class="color-swatch" data-color="#D4533F" style="background:#D4533F"></div>
+                  <div class="color-swatch" data-color="#C4407E" style="background:#C4407E"></div>
+                </div>
+              </div>
+              <button class="btn-primary w-100" onclick="addFuelType()"><i class="bi bi-floppy"></i> Save Fuel Type</button>
+              <div class="divider"></div>
+              <p style="font-size:12px;color:var(--fm-text-muted);margin:0">6 preset types are always available. Add your own custom types above.</p>
+            </div>
+          </div>
+          <div class="col-md-7">
+            <div class="fm-card">
+              <div class="fm-card-title"><i class="bi bi-droplet-half" style="color:var(--fm-primary)"></i>All Fuel Types</div>
+              <div id="fuelTypesList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── FUEL PRICES ────────────────────────────── -->
+      <div class="page" id="page-prices">
+        <div class="row g-3">
+          <div class="col-md-5">
+            <div class="fm-card">
+              <div class="fm-card-title"><i class="bi bi-tag-fill" style="color:var(--fm-primary)"></i>Set Fuel Price</div>
+              <div class="mb-3">
+                <label class="form-label">Fuel Type <span style="color:var(--fm-danger)">*</span></label>
+                <select class="form-select" id="pFuelType" onchange="onPriceFuelTypeChange()"><option value="">Select fuel type</option></select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Price per Unit (৳) <span style="color:var(--fm-danger)">*</span></label>
+                <input type="number" class="form-control" id="pValue" placeholder="e.g. 108.00" step="0.01" min="0">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Effective Date</label>
+                <input type="date" class="form-control" id="pDate">
+              </div>
+              <div id="priceNote" class="info-banner info" style="display:none;margin-bottom:14px">
+                <i class="bi bi-info-circle-fill"></i>
+                <p id="priceNoteText"></p>
+              </div>
+              <button class="btn-primary w-100" onclick="savePrice()"><i class="bi bi-floppy"></i> Save Price</button>
+            </div>
+          </div>
+          <div class="col-md-7">
+            <div class="fm-card">
+              <div class="fm-card-title"><i class="bi bi-table" style="color:var(--fm-primary)"></i>Price History</div>
+              <div id="pricesList"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SETTINGS & DATA ───────────────────────── -->
+      <div class="page" id="page-settings">
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="fm-card">
+              <div class="fm-card-title"><i class="bi bi-database" style="color:var(--fm-primary)"></i>Data Summary</div>
+              <div id="dataSummary" style="margin-bottom:16px"></div>
+            </div>
+
+            <div class="fm-card">
+              <div class="fm-card-title"><i class="bi bi-cloud-download" style="color:var(--fm-success)"></i>Export Data</div>
+              <div class="settings-section">
+                <div class="settings-row">
+                  <div class="settings-row-info">
+                    <p>Export All Data (JSON)</p>
+                    <span>Full backup — vehicles, logs, prices, fuel types</span>
+                  </div>
+                  <button class="btn-success" onclick="exportJSON()"><i class="bi bi-download"></i> Export</button>
+                </div>
+                <div class="settings-row">
+                  <div class="settings-row-info">
+                    <p>Export Logs (CSV)</p>
+                    <span>Spreadsheet-compatible fuel log export</span>
+                  </div>
+                  <button class="btn-secondary" onclick="exportLogsCSV()"><i class="bi bi-filetype-csv"></i> CSV</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="fm-card">
+              <div class="fm-card-title"><i class="bi bi-cloud-upload" style="color:var(--fm-warning)"></i>Import Data</div>
+              <div class="info-banner info">
+                <i class="bi bi-info-circle-fill"></i>
+                <p>Import a previously exported FuelTrack JSON file. <strong>This will replace all current data.</strong></p>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Select JSON Backup File</label>
+                <input type="file" class="form-control" id="importFile" accept=".json">
+              </div>
+              <button class="btn-primary w-100" onclick="importJSON()"><i class="bi bi-upload"></i> Import & Restore</button>
+            </div>
+
+            <div class="fm-card">
+              <div class="fm-card-title"><i class="bi bi-trash3" style="color:var(--fm-danger)"></i>Danger Zone</div>
+              <div class="info-banner danger">
+                <i class="bi bi-exclamation-octagon-fill"></i>
+                <p>The actions below are <strong>permanent and cannot be undone.</strong></p>
+              </div>
+              <div class="settings-section">
+                <div class="settings-row">
+                  <div class="settings-row-info">
+                    <p>Clear All Logs</p>
+                    <span>Remove all fuel log entries only</span>
+                  </div>
+                  <button class="btn-danger" onclick="clearLogs()"><i class="bi bi-journal-x"></i> Clear Logs</button>
+                </div>
+                <div class="settings-row">
+                  <div class="settings-row-info">
+                    <p>Reset Everything</p>
+                    <span>Delete all data including vehicles & prices</span>
+                  </div>
+                  <button class="btn-danger" onclick="resetAll()"><i class="bi bi-trash3"></i> Reset All</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="fm-card" style="margin-top:4px">
+          <div class="fm-card-title"><i class="bi bi-info-circle" style="color:var(--fm-gray)"></i>About FuelTrack</div>
+          <p style="font-size:13.5px;color:var(--fm-text-muted);margin:0;line-height:1.7">
+            <strong style="color:var(--fm-text)">FuelTrack v2.0.0</strong> — A personal, non-commercial fuel management application.<br>
+            All data is stored locally in your browser (localStorage). No data is ever sent to any server.<br>
+            <span class="nc-badge" style="background:var(--fm-gray-light);color:var(--fm-gray);font-size:10px">Non-Commercial Use Only</span>
+          </p>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </div><!-- /main-content -->
+</div><!-- /app-wrapper -->
+
+<!-- ── ADD / EDIT LOG MODAL ─────────────────────────── -->
+<div class="modal-overlay" id="logModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h5><i class="bi bi-journal-plus me-2" style="color:var(--fm-primary)"></i><span id="logModalTitle">Add Fuel Log</span></h5>
+      <button class="modal-close" onclick="closeModal('logModal')">&#x2715;</button>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Log Type <span style="color:var(--fm-danger)">*</span></label>
+      <div class="log-type-toggle">
+        <button class="type-btn active-buy" id="btnBuy" onclick="setLogType('buy')"><i class="bi bi-fuel-pump"></i> Buy Fuel</button>
+        <button class="type-btn"            id="btnUse" onclick="setLogType('use')"><i class="bi bi-arrow-down-circle"></i> Use / Refuel</button>
+      </div>
+      <input type="hidden" id="logType" value="buy">
+      <input type="hidden" id="logEditId" value="">
+    </div>
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label">Vehicle <span style="color:var(--fm-danger)">*</span></label>
+        <select class="form-select" id="logVehicle" onchange="onLogVehicleChange()"><option value="">Select vehicle</option></select>
+      </div>
+      <div class="col-6">
+        <label class="form-label">Fuel Type <span style="color:var(--fm-danger)">*</span></label>
+        <select class="form-select" id="logFuelType" onchange="onLogFuelTypeChange()"><option value="">Select</option></select>
+      </div>
+      <div class="col-6">
+        <label class="form-label">Date <span style="color:var(--fm-danger)">*</span></label>
+        <input type="date" class="form-control" id="logDate">
+      </div>
+      <div class="col-6">
+        <label class="form-label">Quantity <span style="color:var(--fm-danger)">*</span></label>
+        <input type="number" class="form-control" id="logQty" placeholder="e.g. 10.5" step="0.01" min="0" oninput="calcTotal()">
+      </div>
+      <div class="col-6">
+        <label class="form-label">Price per unit (৳)</label>
+        <input type="number" class="form-control" id="logPrice" placeholder="Auto-filled" step="0.01" min="0" oninput="calcTotal()">
+      </div>
+      <div class="col-12" id="totalBox" style="display:none">
+        <div class="total-box">Total Cost: ৳ <strong id="logTotal">0.00</strong></div>
+      </div>
+      <div class="col-6">
+        <label class="form-label">Odometer Start (km)</label>
+        <input type="number" class="form-control" id="logOdoStart" placeholder="e.g. 12500">
+      </div>
+      <div class="col-6">
+        <label class="form-label">Odometer End (km)</label>
+        <input type="number" class="form-control" id="logOdoEnd" placeholder="e.g. 12850">
+      </div>
+      <div class="col-12">
+        <label class="form-label">Notes</label>
+        <input type="text" class="form-control" id="logNotes" placeholder="e.g. Full tank, highway trip…">
+      </div>
+    </div>
+    <div class="d-flex gap-2 mt-4">
+      <button class="btn-secondary flex-fill" onclick="closeModal('logModal')">Cancel</button>
+      <button class="btn-primary flex-fill" onclick="saveLog()"><i class="bi bi-floppy"></i> <span id="logSaveBtnLabel">Save Log</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ─────────────────────────────────────────── -->
+<div id="toast">
+  <i id="toastIcon" class="bi bi-check-circle-fill" style="font-size:15px;color:#3DCCAB"></i>
+  <span id="toastMsg">Saved!</span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+'use strict';
+
+const APP_VERSION = '2.0.0';
+
+const PRESET_FUELS = [
+  { id:'pf-oct95',  name:'Octane 95', unit:'L',   color:'#1A5FD4', preset:true },
+  { id:'pf-oct91',  name:'Octane 91', unit:'L',   color:'#1E7C34', preset:true },
+  { id:'pf-diesel', name:'Diesel',    unit:'L',   color:'#A0520A', preset:true },
+  { id:'pf-cng',    name:'CNG',       unit:'kg',  color:'#0A7060', preset:true },
+  { id:'pf-lpg',    name:'LPG',       unit:'L',   color:'#6632B8', preset:true },
+  { id:'pf-ev',     name:'Electric',  unit:'kWh', color:'#C02B2B', preset:true },
+];
+
+const PAGE_META = {
+  dashboard: { title:'Dashboard',      action:'Add Log'       },
+  logs:      { title:'Fuel Logs',      action:'Add Log'       },
+  vehicles:  { title:'Vehicles',       action:'Add Vehicle'   },
+  fuels:     { title:'Fuel Types',     action:'Add Fuel Type' },
+  prices:    { title:'Fuel Prices',    action:'Set Price'     },
+  settings:  { title:'Settings & Data',action:'Export Data'   },
+};
+
+let db = { vehicles:[], fuelTypes:[], prices:[], logs:[] };
+let currentVehicleId = null;
+let currentMonth     = new Date();
+let trendChart       = null;
+let currentPage      = 'dashboard';
+let toastTimer       = null;
+
+// ── Persistence ────────────────────────────────────────
+function dbSave() {
+  localStorage.setItem('fueltrack_v2', JSON.stringify(db));
+}
+function dbLoad() {
+  try {
+    const r = localStorage.getItem('fueltrack_v2');
+    if (r) db = JSON.parse(r);
+  } catch(e) {}
+  db.vehicles = db.vehicles || [];
+  db.prices   = db.prices   || [];
+  db.logs     = db.logs     || [];
+  const customs = (db.fuelTypes || []).filter(f => !PRESET_FUELS.find(p => p.id === f.id));
+  db.fuelTypes  = [...PRESET_FUELS, ...customs];
+}
+
+// ── Toast ──────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const el = document.getElementById('toast');
+  const ic = document.getElementById('toastIcon');
+  ic.className   = type==='err' ? 'bi bi-exclamation-circle-fill' : 'bi bi-check-circle-fill';
+  ic.style.color = type==='err' ? '#F09595' : '#3DCCAB';
+  document.getElementById('toastMsg').textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ── Navigation ─────────────────────────────────────────
+function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n =>
+    n.classList.toggle('active', n.dataset.page === page)
+  );
+  const m = PAGE_META[page] || { title:page, action:'Action' };
+  document.getElementById('topbarTitle').textContent       = m.title;
+  document.getElementById('topbarActionLabel').textContent = m.action;
+  if(page === 'dashboard') renderDashboard();
+  if(page === 'logs')      { syncFilterVehicles(); renderLogs(); }
+  if(page === 'vehicles')  { syncVehicleFuelTypeSelect(); renderVehicles(); }
+  if(page === 'fuels')     renderFuelTypes();
+  if(page === 'prices')    { syncPriceFuelTypeSelect(); renderPrices(); }
+  if(page === 'settings')  renderSettings();
+}
+
+function topbarAction() {
+  if(currentPage === 'dashboard' || currentPage === 'logs') {
+    openLogModal();
+  } else if(currentPage === 'vehicles') {
+    document.getElementById('vName').focus();
+    window.scrollTo({ top:0, behavior:'smooth' });
+  } else if(currentPage === 'fuels') {
+    document.getElementById('ftName').focus();
+    window.scrollTo({ top:0, behavior:'smooth' });
+  } else if(currentPage === 'prices') {
+    document.getElementById('pFuelType').focus();
+    window.scrollTo({ top:0, behavior:'smooth' });
+  } else if(currentPage === 'settings') {
+    exportJSON();
+  }
+}
+
+// ── Modals ─────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open');    }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── Dropdown helpers ───────────────────────────────────
+function fuelTypeOptions(sel='') {
+  return db.fuelTypes.map(f =>
+    `<option value="${f.id}"${f.id===sel?' selected':''}>${esc(f.name)} (${f.unit})</option>`
+  ).join('');
+}
+function vehicleOptions(sel='') {
+  return db.vehicles.map(v =>
+    `<option value="${v.id}"${v.id===sel?' selected':''}>${v.icon||'🚗'} ${esc(v.name)}</option>`
+  ).join('');
+}
+function syncVehicleFuelTypeSelect() {
+  document.getElementById('vFuelType').innerHTML = '<option value="">Select fuel type</option>' + fuelTypeOptions();
+}
+function syncPriceFuelTypeSelect() {
+  document.getElementById('pFuelType').innerHTML = '<option value="">Select fuel type</option>' + fuelTypeOptions();
+}
+function syncFilterVehicles() {
+  document.getElementById('filterVehicle').innerHTML = '<option value="">All Vehicles</option>' + vehicleOptions();
+}
+
+// ── Icon picker ────────────────────────────────────────
+function initIconPicker() {
+  document.querySelectorAll('#iconPicker .icon-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('#iconPicker .icon-btn').forEach(b => b.classList.remove('selected'));
+      this.classList.add('selected');
+    });
+  });
+}
+function getSelectedIcon() {
+  const s = document.querySelector('#iconPicker .icon-btn.selected');
+  return s ? s.dataset.icon : '🚗';
+}
+function setSelectedIcon(icon) {
+  document.querySelectorAll('#iconPicker .icon-btn').forEach(b => {
+    b.classList.toggle('selected', b.dataset.icon === icon);
+  });
+}
+function resetIconPicker() {
+  document.querySelectorAll('#iconPicker .icon-btn').forEach((b,i) => b.classList.toggle('selected', i===0));
+}
+
+// ── Color picker ───────────────────────────────────────
+function initColorPicker() {
+  document.querySelectorAll('#colorPicker .color-swatch').forEach(dot => {
+    dot.addEventListener('click', function() {
+      document.querySelectorAll('#colorPicker .color-swatch').forEach(d => d.classList.remove('selected'));
+      this.classList.add('selected');
+    });
+  });
+}
+function getSelectedColor() {
+  const s = document.querySelector('#colorPicker .color-swatch.selected');
+  return s ? s.dataset.color : '#1A5FD4';
+}
+function resetColorPicker() {
+  document.querySelectorAll('#colorPicker .color-swatch').forEach((s,i) => s.classList.toggle('selected', i===0));
+}
+
+// ── Vehicles ───────────────────────────────────────────
+function resetVehicleForm() {
+  document.getElementById('vName').value  = '';
+  document.getElementById('vType').value  = '';
+  document.getElementById('vPlate').value = '';
+  document.getElementById('vFuelType').value = '';
+  document.getElementById('vEditId').value   = '';
+  document.getElementById('vehicleFormTitle').textContent = 'Add Vehicle';
+  document.getElementById('vSaveBtnLabel').textContent    = 'Save Vehicle';
+  document.getElementById('vCancelBtn').style.display     = 'none';
+  resetIconPicker();
+}
+
+function editVehicle(id) {
+  const v = db.vehicles.find(x => x.id === id);
+  if(!v) return;
+  syncVehicleFuelTypeSelect();
+  document.getElementById('vName').value         = v.name;
+  document.getElementById('vType').value         = v.type;
+  document.getElementById('vPlate').value        = v.plate || '';
+  document.getElementById('vFuelType').value     = v.fuelTypeId || '';
+  document.getElementById('vEditId').value       = v.id;
+  document.getElementById('vehicleFormTitle').textContent = 'Edit Vehicle';
+  document.getElementById('vSaveBtnLabel').textContent    = 'Update Vehicle';
+  document.getElementById('vCancelBtn').style.display     = '';
+  setSelectedIcon(v.icon || '🚗');
+  document.getElementById('vName').focus();
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+function saveVehicle() {
+  const name  = document.getElementById('vName').value.trim();
+  const type  = document.getElementById('vType').value.trim();
+  const plate = document.getElementById('vPlate').value.trim();
+  const ftId  = document.getElementById('vFuelType').value;
+  const icon  = getSelectedIcon();
+  const editId= document.getElementById('vEditId').value;
+  if(!name) { toast('Vehicle name is required.','err'); return; }
+  if(!type) { toast('Vehicle type is required.','err'); return; }
+
+  if(editId) {
+    const idx = db.vehicles.findIndex(v => v.id === editId);
+    if(idx !== -1) {
+      db.vehicles[idx] = { ...db.vehicles[idx], name, type, plate, fuelTypeId:ftId, icon };
+      toast('Vehicle updated!');
+    }
+  } else {
+    db.vehicles.push({ id:'v'+Date.now(), name, type, plate, fuelTypeId:ftId, icon });
+    toast('Vehicle saved!');
+  }
+  dbSave();
+  resetVehicleForm();
+  renderVehicles();
+}
+
+function deleteVehicle(id) {
+  if(!confirm('Delete this vehicle and all its logs?')) return;
+  db.vehicles = db.vehicles.filter(v => v.id !== id);
+  db.logs     = db.logs.filter(l => l.vehicleId !== id);
+  if(currentVehicleId === id) currentVehicleId = null;
+  dbSave(); renderVehicles(); renderDashboard();
+  toast('Vehicle deleted.');
+}
+
+function renderVehicles() {
+  const el = document.getElementById('vehiclesList');
+  if(!db.vehicles.length) {
+    el.innerHTML = '<div class="empty-state"><i class="bi bi-car-front"></i><p>No vehicles added yet.</p></div>';
+    return;
+  }
+  el.innerHTML = `<table class="fm-table">
+    <thead><tr><th></th><th>Name</th><th>Type</th><th>Plate</th><th>Default Fuel</th><th></th></tr></thead>
+    <tbody>${db.vehicles.map(v => {
+      const ft = db.fuelTypes.find(f => f.id === v.fuelTypeId);
+      return `<tr>
+        <td style="font-size:20px;padding-right:2px">${v.icon||'🚗'}</td>
+        <td><strong style="font-size:14px">${esc(v.name)}</strong></td>
+        <td><span style="font-size:12px;color:var(--fm-text-muted)">${esc(v.type)}</span></td>
+        <td><span style="font-size:12px">${v.plate ? esc(v.plate) : '—'}</span></td>
+        <td>${ft ? `<span class="fuel-badge" style="background:${ft.color}22;color:${ft.color}">${esc(ft.name)}</span>` : '<span style="color:var(--fm-text-muted);font-size:12px">—</span>'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn-icon edit" onclick="editVehicle('${v.id}')" title="Edit"><i class="bi bi-pencil"></i></button>
+          <button class="btn-icon" onclick="deleteVehicle('${v.id}')" title="Delete"><i class="bi bi-trash3"></i></button>
+        </td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+// ── Fuel Types ─────────────────────────────────────────
+function addFuelType() {
+  const name  = document.getElementById('ftName').value.trim();
+  const unit  = document.getElementById('ftUnit').value;
+  const color = getSelectedColor();
+  if(!name) { toast('Fuel type name is required.','err'); return; }
+  if(db.fuelTypes.some(f => f.name.toLowerCase() === name.toLowerCase())) {
+    toast('A fuel type with this name already exists.','err'); return;
+  }
+  db.fuelTypes.push({ id:'ft'+Date.now(), name, unit, color, preset:false });
+  dbSave();
+  document.getElementById('ftName').value = '';
+  document.getElementById('ftUnit').value = 'L';
+  resetColorPicker();
+  renderFuelTypes(); syncVehicleFuelTypeSelect(); syncPriceFuelTypeSelect();
+  toast('Fuel type saved!');
+}
+
+function deleteFuelType(id) {
+  const ft = db.fuelTypes.find(f => f.id === id);
+  if(!ft) { toast('Not found.','err'); return; }
+  if(ft.preset) { toast('Preset fuel types cannot be deleted.','err'); return; }
+  if(!confirm(`Delete "${ft.name}"?`)) return;
+  db.fuelTypes = db.fuelTypes.filter(f => f.id !== id);
+  dbSave(); renderFuelTypes(); syncVehicleFuelTypeSelect(); syncPriceFuelTypeSelect();
+  toast('Fuel type deleted.');
+}
+
+function renderFuelTypes() {
+  const el = document.getElementById('fuelTypesList');
+  el.innerHTML = `<table class="fm-table">
+    <thead><tr><th>Name</th><th>Unit</th><th>Kind</th><th></th></tr></thead>
+    <tbody>${db.fuelTypes.map(f => `<tr>
+      <td><span class="fuel-badge" style="background:${f.color}22;color:${f.color};font-size:12px">${esc(f.name)}</span></td>
+      <td><span style="font-size:13px">${f.unit}</span></td>
+      <td><span style="font-size:11px;color:var(--fm-text-muted)">${f.preset?'Preset':'Custom'}</span></td>
+      <td>${!f.preset ? `<button class="btn-icon" onclick="deleteFuelType('${f.id}')"><i class="bi bi-trash3"></i></button>` : ''}</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+// ── Fuel Prices ────────────────────────────────────────
+function onPriceFuelTypeChange() {
+  const ftId = document.getElementById('pFuelType').value;
+  const note = document.getElementById('priceNote');
+  if(!ftId) { note.style.display='none'; document.getElementById('pValue').value=''; return; }
+  const entries = db.prices.filter(p => p.fuelTypeId === ftId).sort((a,b) => b.date.localeCompare(a.date));
+  if(entries.length) {
+    const ft = db.fuelTypes.find(f => f.id === ftId);
+    document.getElementById('priceNoteText').innerHTML =
+      `Current price for <strong>${esc(ft?.name||'')}</strong>: <strong>৳${entries[0].price.toFixed(2)}</strong> (${entries[0].date}). Saving will add a new entry.`;
+    document.getElementById('pValue').value = entries[0].price.toFixed(2);
+    note.style.display = 'flex';
+  } else {
+    note.style.display = 'none';
+    document.getElementById('pValue').value = '';
+  }
+}
+
+function savePrice() {
+  const ftId = document.getElementById('pFuelType').value;
+  const val  = parseFloat(document.getElementById('pValue').value);
+  const date = document.getElementById('pDate').value || todayStr();
+  if(!ftId)              { toast('Please select a fuel type.','err');  return; }
+  if(isNaN(val)||val<=0) { toast('Please enter a valid price.','err'); return; }
+  db.prices.push({ id:'p'+Date.now(), fuelTypeId:ftId, price:val, date });
+  dbSave();
+  document.getElementById('pFuelType').value = '';
+  document.getElementById('pValue').value    = '';
+  document.getElementById('pDate').value     = todayStr();
+  document.getElementById('priceNote').style.display = 'none';
+  renderPrices(); toast('Price saved!');
+}
+
+function deletePrice(id) {
+  if(!confirm('Remove this price entry?')) return;
+  db.prices = db.prices.filter(p => p.id !== id);
+  dbSave(); renderPrices(); toast('Price removed.');
+}
+
+function getLatestPrice(fuelTypeId) {
+  const e = db.prices.filter(p => p.fuelTypeId === fuelTypeId).sort((a,b) => b.date.localeCompare(a.date));
+  return e.length ? e[0].price : null;
+}
+
+function renderPrices() {
+  const el = document.getElementById('pricesList');
+  if(!db.prices.length) {
+    el.innerHTML = '<div class="empty-state"><i class="bi bi-tag"></i><p>No prices saved yet.</p></div>'; return;
+  }
+  const sorted = [...db.prices].sort((a,b) => b.date.localeCompare(a.date));
+  el.innerHTML = `<table class="fm-table">
+    <thead><tr><th>Fuel Type</th><th>Price (৳/unit)</th><th>Date</th><th></th></tr></thead>
+    <tbody>${sorted.map(p => {
+      const ft = db.fuelTypes.find(f => f.id === p.fuelTypeId);
+      return `<tr>
+        <td>${ft ? `<span class="fuel-badge" style="background:${ft.color}22;color:${ft.color}">${esc(ft.name)}</span>` : '<span style="color:var(--fm-text-muted)">Unknown</span>'}</td>
+        <td><strong style="font-family:var(--fm-mono)">৳${p.price.toFixed(2)}</strong></td>
+        <td style="font-size:12px;color:var(--fm-text-muted)">${p.date}</td>
+        <td><button class="btn-icon" onclick="deletePrice('${p.id}')"><i class="bi bi-trash3"></i></button></td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+}
+
+// ── Log Modal ──────────────────────────────────────────
+function openLogModal(editId=null) {
+  const editing = editId != null;
+  document.getElementById('logModalTitle').textContent    = editing ? 'Edit Fuel Log' : 'Add Fuel Log';
+  document.getElementById('logSaveBtnLabel').textContent  = editing ? 'Update Log'   : 'Save Log';
+  document.getElementById('logEditId').value              = editId || '';
+
+  document.getElementById('logVehicle').innerHTML = '<option value="">Select vehicle</option>' + vehicleOptions(currentVehicleId||'');
+
+  if(editing) {
+    const l = db.logs.find(x => x.id === editId);
+    if(!l) return;
+    setLogType(l.type);
+    document.getElementById('logVehicle').value   = l.vehicleId;
+    populateLogFuelTypes(l.fuelTypeId);
+    document.getElementById('logDate').value      = l.date;
+    document.getElementById('logQty').value       = l.qty;
+    document.getElementById('logPrice').value     = l.price != null ? l.price : '';
+    document.getElementById('logOdoStart').value  = l.odoStart != null ? l.odoStart : '';
+    document.getElementById('logOdoEnd').value    = l.odoEnd   != null ? l.odoEnd   : '';
+    document.getElementById('logNotes').value     = l.notes || '';
+    calcTotal();
+  } else {
+    setLogType('buy');
+    document.getElementById('logDate').value      = todayStr();
+    document.getElementById('logQty').value       = '';
+    document.getElementById('logPrice').value     = '';
+    document.getElementById('logOdoStart').value  = '';
+    document.getElementById('logOdoEnd').value    = '';
+    document.getElementById('logNotes').value     = '';
+    document.getElementById('totalBox').style.display = 'none';
+    populateLogFuelTypes('');
+  }
+  openModal('logModal');
+}
+
+function setLogType(t) {
+  document.getElementById('logType').value = t;
+  document.getElementById('btnBuy').className = 'type-btn' + (t==='buy' ? ' active-buy' : '');
+  document.getElementById('btnUse').className = 'type-btn' + (t==='use' ? ' active-use' : '');
+}
+
+function onLogVehicleChange() { populateLogFuelTypes(''); }
+
+function populateLogFuelTypes(selFtId=null) {
+  const vId = document.getElementById('logVehicle').value;
+  const v   = db.vehicles.find(x => x.id === vId);
+  const sel = selFtId != null ? selFtId : (v?.fuelTypeId || '');
+  document.getElementById('logFuelType').innerHTML = '<option value="">Select</option>' + fuelTypeOptions(sel);
+  onLogFuelTypeChange();
+}
+
+function onLogFuelTypeChange() {
+  const ftId = document.getElementById('logFuelType').value;
+  const price = getLatestPrice(ftId);
+  if(price !== null && document.getElementById('logPrice').value === '') {
+    document.getElementById('logPrice').value = price.toFixed(2);
+  }
+  calcTotal();
+}
+
+function calcTotal() {
+  const q = parseFloat(document.getElementById('logQty').value);
+  const p = parseFloat(document.getElementById('logPrice').value);
+  const box = document.getElementById('totalBox');
+  if(!isNaN(q) && !isNaN(p) && q>0 && p>0) {
+    document.getElementById('logTotal').textContent = (q*p).toFixed(2);
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+function saveLog() {
+  const type       = document.getElementById('logType').value;
+  const vehicleId  = document.getElementById('logVehicle').value;
+  const fuelTypeId = document.getElementById('logFuelType').value;
+  const date       = document.getElementById('logDate').value;
+  const qty        = parseFloat(document.getElementById('logQty').value);
+  const priceRaw   = document.getElementById('logPrice').value;
+  const price      = priceRaw !== '' ? parseFloat(priceRaw) : null;
+  const osRaw      = document.getElementById('logOdoStart').value;
+  const oeRaw      = document.getElementById('logOdoEnd').value;
+  const odoStart   = osRaw !== '' ? parseFloat(osRaw) : null;
+  const odoEnd     = oeRaw !== '' ? parseFloat(oeRaw) : null;
+  const notes      = document.getElementById('logNotes').value.trim();
+  const editId     = document.getElementById('logEditId').value;
+
+  if(!vehicleId)          { toast('Select a vehicle.','err');       return; }
+  if(!fuelTypeId)         { toast('Select a fuel type.','err');     return; }
+  if(!date)               { toast('Enter a date.','err');           return; }
+  if(isNaN(qty)||qty<=0)  { toast('Enter a valid quantity.','err'); return; }
+
+  const entry = { type, vehicleId, fuelTypeId, date, qty, price, odoStart, odoEnd, notes };
+
+  if(editId) {
+    const idx = db.logs.findIndex(l => l.id === editId);
+    if(idx !== -1) db.logs[idx] = { ...db.logs[idx], ...entry };
+    toast('Log updated!');
+  } else {
+    db.logs.push({ id:'l'+Date.now(), ...entry });
+    toast('Fuel log saved!');
+  }
+
+  dbSave();
+  closeModal('logModal');
+  if(currentPage === 'dashboard') renderDashboard();
+  if(currentPage === 'logs')      renderLogs();
+}
+
+// ── Fuel Logs Page ─────────────────────────────────────
+function renderLogs() {
+  const el  = document.getElementById('logsTable');
+  const vF  = document.getElementById('filterVehicle').value;
+  const tF  = document.getElementById('filterLogType').value;
+  let logs  = [...db.logs].sort((a,b) => b.date.localeCompare(a.date));
+  if(vF) logs = logs.filter(l => l.vehicleId === vF);
+  if(tF) logs = logs.filter(l => l.type === tF);
+  if(!logs.length) {
+    el.innerHTML = '<div class="empty-state"><i class="bi bi-journal"></i><p>No logs found.</p></div>'; return;
+  }
+  el.innerHTML = `<div style="overflow-x:auto"><table class="fm-table">
+    <thead><tr><th>Date</th><th>Vehicle</th><th>Type</th><th>Fuel</th><th>Qty</th><th>Price</th><th>Total</th><th>Odo Start</th><th>Odo End</th><th>Dist</th><th>Notes</th><th></th></tr></thead>
+    <tbody>${logs.map(l => {
+      const v    = db.vehicles.find(x => x.id === l.vehicleId);
+      const ft   = db.fuelTypes.find(x => x.id === l.fuelTypeId);
+      const cost = l.price != null ? (l.qty * l.price).toFixed(2) : null;
+      const dist = (l.odoStart!=null && l.odoEnd!=null && l.odoEnd>l.odoStart) ? (l.odoEnd - l.odoStart) : null;
+      return `<tr>
+        <td style="white-space:nowrap;font-size:12px;font-family:var(--fm-mono)">${l.date}</td>
+        <td style="font-size:13px">${v?.icon||'🚗'} ${v ? esc(v.name) : '—'}</td>
+        <td><span class="badge-${l.type}">${l.type==='buy'?'Buy':'Use'}</span></td>
+        <td>${ft ? `<span class="fuel-badge" style="background:${ft.color}22;color:${ft.color}">${esc(ft.name)}</span>` : '—'}</td>
+        <td><strong style="font-family:var(--fm-mono)">${l.qty.toFixed(1)} ${ft?.unit||'L'}</strong></td>
+        <td style="font-family:var(--fm-mono)">${l.price!=null ? '৳'+l.price.toFixed(2) : '—'}</td>
+        <td>${cost ? '<strong style="font-family:var(--fm-mono)">৳'+cost+'</strong>' : '—'}</td>
+        <td style="font-size:12px;font-family:var(--fm-mono)">${l.odoStart!=null ? l.odoStart.toLocaleString() : '—'}</td>
+        <td style="font-size:12px;font-family:var(--fm-mono)">${l.odoEnd  !=null ? l.odoEnd.toLocaleString()   : '—'}</td>
+        <td>${dist!=null ? `<span class="badge-odo">${dist} km</span>` : '—'}</td>
+        <td style="font-size:12px;color:var(--fm-text-muted);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(l.notes||'')}">${l.notes || '—'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn-icon edit" onclick="openLogModal('${l.id}')" title="Edit"><i class="bi bi-pencil"></i></button>
+          <button class="btn-icon" onclick="deleteLog('${l.id}')" title="Delete"><i class="bi bi-trash3"></i></button>
+        </td>
+      </tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+
+function deleteLog(id) {
+  if(!confirm('Delete this log entry?')) return;
+  db.logs = db.logs.filter(l => l.id !== id);
+  dbSave(); renderLogs(); toast('Log deleted.');
+}
+
+// ── Dashboard ──────────────────────────────────────────
+function renderVehicleChips() {
+  const el = document.getElementById('vehicleChips');
+  if(!db.vehicles.length) {
+    el.innerHTML = '<p style="color:var(--fm-text-muted);font-size:13px;margin:0"><i class="bi bi-info-circle me-1"></i>No vehicles yet — add one in Setup › Vehicles.</p>';
+    return;
+  }
+  const all = [{ id:null, icon:'🚘', name:'All Vehicles' }, ...db.vehicles];
+  el.innerHTML = all.map(c =>
+    `<div class="v-chip${currentVehicleId===c.id?' active':''}" onclick="selectVehicle(${c.id?`'${c.id}'`:'null'})">
+      <span style="font-size:16px">${c.icon||'🚗'}</span> ${esc(c.name)}
+    </div>`
+  ).join('');
+}
+
+function selectVehicle(id) { currentVehicleId = id; renderDashboard(); }
+function changeMonth(dir)  { currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth()+dir, 1); renderDashboard(); }
+
+function renderDashboard() {
+  renderVehicleChips();
+  const yr = currentMonth.getFullYear(), mo = currentMonth.getMonth();
+  document.getElementById('monthLabel').textContent = currentMonth.toLocaleString('default', { month:'long', year:'numeric' });
+
+  const monthLogs = db.logs.filter(l => {
+    const d = new Date(l.date);
+    return d.getFullYear()===yr && d.getMonth()===mo && (!currentVehicleId || l.vehicleId===currentVehicleId);
+  });
+  const buyLogs = monthLogs.filter(l => l.type==='buy');
+  const useLogs = monthLogs.filter(l => l.type==='use');
+  const totalBought = buyLogs.reduce((s,l) => s+l.qty, 0);
+  const totalUsed   = useLogs.reduce((s,l) => s+l.qty, 0);
+  const totalCost   = buyLogs.reduce((s,l) => s+(l.price!=null ? l.qty*l.price : 0), 0);
+
+  let avgMileage=null, totalDist=0;
+  const odoLogs = monthLogs.filter(l => l.odoStart!=null && l.odoEnd!=null && l.odoEnd>l.odoStart);
+  if(odoLogs.length) {
+    totalDist = odoLogs.reduce((s,l) => s+(l.odoEnd-l.odoStart), 0);
+    const fuelKm = odoLogs.reduce((s,l) => s+l.qty, 0);
+    if(fuelKm>0) avgMileage = totalDist/fuelKm;
+  }
+
+  document.getElementById('stat-bought').textContent      = totalBought.toFixed(1)+' L';
+  document.getElementById('stat-bought-cost').textContent = '৳'+totalCost.toFixed(2)+' spent';
+  document.getElementById('stat-used').textContent        = totalUsed.toFixed(1)+' L';
+  document.getElementById('stat-used-pct').textContent    = totalBought>0 ? (totalUsed/totalBought*100).toFixed(0)+'% of bought' : '— of bought';
+  document.getElementById('stat-mileage').textContent     = avgMileage!=null ? avgMileage.toFixed(2) : '—';
+  document.getElementById('stat-mileage-sub').textContent = avgMileage!=null ? `km/L · ${odoLogs.length} log(s)` : 'km/L — add odometer readings';
+  document.getElementById('stat-dist').textContent        = totalDist.toFixed(0)+' km';
+  document.getElementById('stat-dist-sub').textContent    = odoLogs.length ? 'From odometer logs' : 'No odometer data';
+  document.getElementById('mileageBanner').style.display  = (monthLogs.length>0 && odoLogs.length===0) ? 'flex' : 'none';
+
+  renderTrendChart();
+  renderRecentLogs();
+  renderFuelBreakdown(monthLogs);
+}
+
+function renderRecentLogs() {
+  const el   = document.getElementById('recentLogs');
+  const logs = [...db.logs].sort((a,b) => b.date.localeCompare(a.date)).slice(0,7);
+  if(!logs.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:20px 0"><i class="bi bi-journal"></i><p>No logs yet.</p></div>'; return;
+  }
+  el.innerHTML = logs.map(l => {
+    const v    = db.vehicles.find(x => x.id === l.vehicleId);
+    const ft   = db.fuelTypes.find(x => x.id === l.fuelTypeId);
+    const cost = l.price!=null ? '৳'+(l.qty*l.price).toFixed(2) : null;
+    const dist = (l.odoStart!=null && l.odoEnd!=null && l.odoEnd>l.odoStart) ? (l.odoEnd-l.odoStart) : null;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--fm-border)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:19px">${v?.icon||'🚗'}</span>
+        <div>
+          <div style="font-size:13px;font-weight:600">${v ? esc(v.name) : 'Unknown'} <span class="badge-${l.type}">${l.type==='buy'?'Buy':'Use'}</span></div>
+          <div style="font-size:11px;color:var(--fm-text-muted);font-family:var(--fm-mono)">${l.date} · ${l.qty.toFixed(1)} ${ft?.unit||'L'} ${ft ? esc(ft.name) : ''}</div>
+        </div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;font-weight:700;color:var(--fm-primary);font-family:var(--fm-mono)">${cost||'—'}</div>
+        ${dist ? `<span class="badge-odo">${dist} km</span>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderFuelBreakdown(logs) {
+  const el = document.getElementById('fuelBreakdown');
+  const bl = logs.filter(l => l.type==='buy');
+  if(!bl.length) {
+    el.innerHTML = '<p style="color:var(--fm-text-muted);font-size:13px">No purchase data this month.</p>'; return;
+  }
+  const byFuel = {};
+  bl.forEach(l => {
+    if(!byFuel[l.fuelTypeId]) byFuel[l.fuelTypeId] = { qty:0, cost:0 };
+    byFuel[l.fuelTypeId].qty  += l.qty;
+    byFuel[l.fuelTypeId].cost += l.price!=null ? l.qty*l.price : 0;
+  });
+  const total = Object.values(byFuel).reduce((s,x) => s+x.qty, 0);
+  el.innerHTML = Object.entries(byFuel).map(([ftId, d]) => {
+    const ft  = db.fuelTypes.find(f => f.id === ftId);
+    const pct = total>0 ? (d.qty/total*100) : 0;
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <span style="font-size:13px;font-weight:600">${ft ? esc(ft.name) : 'Unknown'}</span>
+        <span style="font-size:12px;color:var(--fm-text-muted);font-family:var(--fm-mono)">${d.qty.toFixed(1)} ${ft?.unit||'L'} · ৳${d.cost.toFixed(2)} · <strong>${pct.toFixed(1)}%</strong></span>
+      </div>
+      <div class="fuel-progress">
+        <div class="fuel-progress-bar" style="width:${pct.toFixed(1)}%;background:${ft?.color||'var(--fm-primary)'}"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTrendChart() {
+  const months=[], buyData=[], useData=[], costData=[];
+  for(let i=5; i>=0; i--) {
+    const d = new Date(currentMonth.getFullYear(), currentMonth.getMonth()-i, 1);
+    months.push(d.toLocaleString('default', { month:'short', year:'2-digit' }));
+    const logs = db.logs.filter(l => {
+      const ld = new Date(l.date);
+      return ld.getFullYear()===d.getFullYear() && ld.getMonth()===d.getMonth() && (!currentVehicleId || l.vehicleId===currentVehicleId);
+    });
+    buyData.push(+logs.filter(l=>l.type==='buy').reduce((s,l)=>s+l.qty, 0).toFixed(1));
+    useData.push(+logs.filter(l=>l.type==='use').reduce((s,l)=>s+l.qty, 0).toFixed(1));
+    costData.push(+logs.filter(l=>l.type==='buy').reduce((s,l)=>s+(l.price!=null?l.qty*l.price:0), 0).toFixed(2));
+  }
+  const canvas = document.getElementById('trendChart');
+  if(trendChart) { trendChart.destroy(); trendChart = null; }
+  trendChart = new Chart(canvas, {
+    type:'bar',
+    data:{
+      labels: months,
+      datasets:[
+        { label:'Bought (L)', data:buyData, backgroundColor:'#3A8BE8', borderRadius:5, yAxisID:'y' },
+        { label:'Used (L)',   data:useData, backgroundColor:'#F5A623', borderRadius:5, yAxisID:'y' },
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{ legend:{ labels:{ font:{size:11,family:'DM Sans'}, boxWidth:12, padding:14 }}},
+      scales:{
+        y:{ beginAtZero:true, ticks:{ font:{size:10} }, grid:{ color:'#e8e6e0' } },
+        x:{ ticks:{ font:{size:10} }, grid:{ display:false } }
+      }
+    }
+  });
+}
+
+// ── Settings page ──────────────────────────────────────
+function renderSettings() {
+  const totalCost = db.logs.filter(l=>l.type==='buy' && l.price!=null).reduce((s,l)=>s+l.qty*l.price, 0);
+  const allDist   = db.logs.filter(l=>l.odoStart!=null&&l.odoEnd!=null&&l.odoEnd>l.odoStart).reduce((s,l)=>s+(l.odoEnd-l.odoStart), 0);
+  document.getElementById('dataSummary').innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <div class="mini-stat"><i class="bi bi-car-front"></i> Vehicles: <strong>${db.vehicles.length}</strong></div>
+      <div class="mini-stat"><i class="bi bi-journal-text"></i> Log Entries: <strong>${db.logs.length}</strong></div>
+      <div class="mini-stat"><i class="bi bi-tag"></i> Price Entries: <strong>${db.prices.length}</strong></div>
+      <div class="mini-stat"><i class="bi bi-droplet-half"></i> Fuel Types: <strong>${db.fuelTypes.length}</strong></div>
+      <div class="mini-stat"><i class="bi bi-currency-dollar"></i> Total Spent: <strong>৳${totalCost.toFixed(2)}</strong></div>
+      <div class="mini-stat"><i class="bi bi-signpost"></i> Total Distance: <strong>${allDist.toFixed(0)} km</strong></div>
+    </div>`;
+}
+
+// ── Export / Import ────────────────────────────────────
+function exportJSON() {
+  const payload = JSON.stringify({ version:APP_VERSION, exportedAt:new Date().toISOString(), ...db }, null, 2);
+  downloadFile('fueltrack-backup-'+todayStr()+'.json', 'application/json', payload);
+  toast('Backup exported!');
+}
+
+function exportLogsCSV() {
+  if(!db.logs.length) { toast('No logs to export.','err'); return; }
+  const headers = ['Date','Vehicle','Type','Fuel Type','Quantity','Unit','Price per Unit','Total Cost','Odo Start','Odo End','Distance (km)','Notes'];
+  const rows = [...db.logs].sort((a,b)=>b.date.localeCompare(a.date)).map(l => {
+    const v  = db.vehicles.find(x=>x.id===l.vehicleId);
+    const ft = db.fuelTypes.find(x=>x.id===l.fuelTypeId);
+    const cost = l.price!=null ? (l.qty*l.price).toFixed(2) : '';
+    const dist = (l.odoStart!=null&&l.odoEnd!=null&&l.odoEnd>l.odoStart) ? (l.odoEnd-l.odoStart) : '';
+    return [
+      l.date, v?.name||'', l.type, ft?.name||'',
+      l.qty.toFixed(2), ft?.unit||'L',
+      l.price!=null ? l.price.toFixed(2) : '',
+      cost,
+      l.odoStart!=null ? l.odoStart : '',
+      l.odoEnd!=null   ? l.odoEnd   : '',
+      dist,
+      l.notes||''
+    ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+  });
+  const csv = [headers.join(','), ...rows].join('\n');
+  downloadFile('fueltrack-logs-'+todayStr()+'.csv', 'text/csv', csv);
+  toast('Logs exported as CSV!');
+}
+
+function importJSON() {
+  const file = document.getElementById('importFile').files[0];
+  if(!file) { toast('Please select a JSON file.','err'); return; }
+  if(!confirm('This will replace ALL current data. Are you sure?')) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(!data.vehicles && !data.logs) { toast('Invalid backup file format.','err'); return; }
+      db.vehicles = data.vehicles || [];
+      db.prices   = data.prices   || [];
+      db.logs     = data.logs     || [];
+      const customs = (data.fuelTypes || []).filter(f => !PRESET_FUELS.find(p => p.id === f.id));
+      db.fuelTypes  = [...PRESET_FUELS, ...customs];
+      dbSave();
+      document.getElementById('importFile').value = '';
+      renderSettings();
+      toast('Data imported successfully!');
+    } catch(err) {
+      toast('Failed to parse file: ' + err.message, 'err');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function clearLogs() {
+  if(!db.logs.length) { toast('No logs to clear.'); return; }
+  if(!confirm(`Delete all ${db.logs.length} log entries? This cannot be undone.`)) return;
+  db.logs = [];
+  dbSave(); renderSettings();
+  if(currentPage==='logs') renderLogs();
+  if(currentPage==='dashboard') renderDashboard();
+  toast('All logs cleared.');
+}
+
+function resetAll() {
+  if(!confirm('Reset ALL data? Vehicles, logs, prices and custom fuel types will be permanently deleted.')) return;
+  db = { vehicles:[], fuelTypes:[...PRESET_FUELS], prices:[], logs:[] };
+  dbSave();
+  currentVehicleId = null;
+  renderSettings();
+  toast('All data reset.');
+}
+
+function downloadFile(filename, mime, content) {
+  const blob = new Blob([content], { type: mime });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 300);
+}
+
+// ── Utility ────────────────────────────────────────────
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ───────────────────────────────────────────────
+function init() {
+  dbLoad();
+  document.getElementById('sidebarVer').textContent = 'v'+APP_VERSION;
+  document.getElementById('topbarVer').textContent  = 'v'+APP_VERSION;
+  document.title = 'FuelTrack v'+APP_VERSION;
+  document.getElementById('pDate').value = todayStr();
+  initIconPicker();
+  initColorPicker();
+  navigate('dashboard');
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
